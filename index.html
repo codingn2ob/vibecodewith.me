@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>vibecodewith.me — AI 作品實驗室</title>
+  <meta name="description" content="vibecodewith.me — 個人主頁與 AI 作品實驗室。與 AI 一起從靈感到上線，打造有趣的網頁實驗與實用小工具。" />
+  <meta name="theme-color" content="#eff0eb" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem('vcwm-theme'); } catch (e) {}
+      if (!theme && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
+      if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳至主要內容</a>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-out" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.7l2.4 4.6C14.3 16 15.5 17 17.5 17H21"/><path d="M3 17h3.5c1.4 0 2.4-.5 3.2-1.4M14.3 8.4C15.1 7.5 16.1 7 17.5 7H21"/><path d="m18 4 3 3-3 3M18 14l3 3-3 3"/></g></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></g></symbol>
+    <symbol id="i-claude" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.9 2.9M15.5 15.5l2.9 2.9M18.4 5.6l-2.9 2.9M8.5 15.5l-2.9 2.9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a href="#top" class="brand" aria-label="vibecodewith.me 首頁">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span data-bind="brand">vibecodewith.me</span>
+      </a>
+      <nav class="nav" aria-label="主導覽列">
+        <a href="#about" data-spy="about">關於</a>
+        <a href="#vibe-card" data-spy="vibe-card">靈感機</a>
+        <a href="#lab" data-spy="lab">實驗室</a>
+        <a href="#contact" data-spy="contact">聯絡</a>
+      </nav>
+      <div class="tools">
+        <button type="button" id="spotlight-trigger" class="tool-btn" aria-label="開啟快速指令" aria-haspopup="dialog" aria-controls="spotlight">
+          <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+          <kbd class="kbd-hint" data-kbd>Ctrl K</kbd>
+        </button>
+        <button type="button" id="theme-toggle" class="tool-btn tool-btn-square" aria-label="切換淺色或深色外觀" aria-pressed="false">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section id="top" class="hero">
+      <div class="wrap hero-grid">
+        <h1 class="hero-title">
+          <span class="hero-line">Vibe code</span>
+          <span class="hero-line hero-line-em">with me.</span>
+        </h1>
+        <div class="hero-side">
+          <p class="hero-lede" data-bind="heroSubtitle">把腦海裡的奇思妙想，透過 AI 快速打磨成真正上線的網頁實驗與小工具。這裡是我的個人主頁，也是所有靈感的發射台。</p>
+          <div class="hero-actions">
+            <a href="#lab" class="btn btn-primary">探索實驗室
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg>
+            </a>
+            <a href="#contact" class="text-link">聯絡我</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap">
+        <dl class="now-strip">
+          <div class="now-cell">
+            <dt>台北時間</dt>
+            <dd><time id="taipei-clock" class="clock">--:--:--</time></dd>
+          </div>
+          <div class="now-cell now-cell-wide">
+            <dt><span class="live-dot" aria-hidden="true"></span>目前專注</dt>
+            <dd data-bind="nowBuilding">打造 vibecodewith.me 個人實驗室，以及下一批實用的 AI 小玩具。</dd>
+          </div>
+          <div class="now-cell">
+            <dt>帳號</dt>
+            <dd><a data-bind-href="githubUrl" href="https://github.com/codingn2ob" target="_blank" rel="noopener noreferrer" data-bind="handle">@codingn2ob</a></dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="section">
+      <div class="wrap">
+        <header class="sec-head">
+          <h2 class="section-title">簡約、好奇，而且樂在其中。</h2>
+          <p class="sec-note">關於我，以及我平常怎麼做東西。</p>
+        </header>
+        <div class="about-grid">
+          <article class="panel about-panel">
+            <div class="panel-top">
+              <h3 class="panel-label">關於我</h3>
+              <span class="chip" data-bind="handle">@codingn2ob</span>
+            </div>
+            <p class="about-lead">用對話驅動創造，把想法變成作品。</p>
+            <p class="about-text" data-bind="bio">熱衷於探索 AI 與前端網頁的各種可能。喜歡用自然語言和 AI 結對開發，專注打造簡潔直覺、讓人會心一笑的小工具與互動體驗。</p>
+            <p class="skills">Vibe Coding<span aria-hidden="true">／</span>AI Agents<span aria-hidden="true">／</span>Web Experiments<span aria-hidden="true">／</span>Rapid Prototyping</p>
+          </article>
+          <article class="panel toolkit">
+            <div class="panel-top">
+              <h3 class="panel-label">AI 創作工作流</h3>
+            </div>
+            <ul class="toolkit-list">
+              <li><svg class="icon" aria-hidden="true"><use href="#i-claude"/></svg>Claude<span>對話與規劃</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-bolt"/></svg>Antigravity<span>平行開發</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg>GitHub<span>版本與部署</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Web / JS<span>純前端實作</span></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Vibe machine -->
+    <section id="vibe-card" class="section section-tight" aria-labelledby="vibe-heading">
+      <div class="wrap">
+      <div class="vibe vibe-grid">
+        <div class="vibe-head">
+          <h2 id="vibe-heading" class="vibe-heading">今天做什麼小玩具？</h2>
+          <p class="vibe-intro">Vibe 靈感機會抽出一個 30 分鐘內做得完的點子，附上可以直接貼給 Claude 的起手式 Prompt。</p>
+          <div class="vibe-actions">
+            <button type="button" id="vibe-next-btn" class="btn btn-signal">
+              <svg class="icon" aria-hidden="true"><use href="#i-shuffle"/></svg>
+              換一個靈感
+            </button>
+            <span class="vibe-count" id="vibe-count" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div id="vibe-content" class="vibe-sheet" aria-live="polite">
+          <div class="vibe-meta">
+            <span id="vibe-time">預計 30 分鐘</span>
+          </div>
+          <h3 id="vibe-title" class="vibe-title">載入靈感中…</h3>
+          <p id="vibe-desc" class="vibe-desc"></p>
+          <figure class="prompt">
+            <figcaption>
+              <span>起手式 Prompt</span>
+              <button type="button" id="vibe-copy-btn" class="copy-btn">
+                <svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>
+                複製
+              </button>
+            </figcaption>
+            <pre><code id="vibe-prompt"></code></pre>
+          </figure>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <!-- Lab -->
+    <section id="lab" class="section">
+      <div class="wrap">
+        <header class="sec-head lab-head">
+          <div>
+            <h2 class="section-title">AI 作品實驗室</h2>
+            <p class="sec-note">用 AI 做出來、已上線或正在做的作品。</p>
+          </div>
+          <div class="filters" role="tablist" aria-label="篩選實驗室作品">
+            <button type="button" class="filter is-active" role="tab" aria-selected="true" data-filter="all">全部<span data-count="all"></span></button>
+            <button type="button" class="filter" role="tab" aria-selected="false" data-filter="ai">AI 工具<span data-count="ai"></span></button>
+            <button type="button" class="filter" role="tab" aria-selected="false" data-filter="web">網頁實驗<span data-count="web"></span></button>
+            <button type="button" class="filter" role="tab" aria-selected="false" data-filter="wip">進行中<span data-count="wip"></span></button>
+          </div>
+        </header>
+        <ol id="projects-list" class="projects" aria-live="polite"></ol>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact" class="section contact">
+      <div class="wrap">
+      <div class="panel contact-panel">
+        <h2 class="contact-title">有有趣的點子，<br />想一起 Vibe Code？</h2>
+        <p class="contact-sub">無論是想交流 AI 工作流、合作實驗小工具，或是單純打聲招呼，都歡迎寫信給我。</p>
+        <button type="button" id="copy-email-btn" class="email-btn" aria-label="複製信箱">
+          <span class="email-text" data-bind="email">lin5555888@vibecodewith.me</span>
+          <span class="email-hint"><svg class="icon" aria-hidden="true"><use href="#i-copy"/></svg>點一下複製</span>
+        </button>
+        <div class="contact-links">
+          <a class="text-link" href="https://github.com/codingn2ob" data-bind-href="githubUrl" target="_blank" rel="noopener noreferrer">
+            前往 GitHub <svg class="icon" aria-hidden="true"><use href="#i-arrow-out"/></svg>
+          </a>
+        </div>
+      </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p>© 2026 <span data-bind="brand">vibecodewith.me</span> · Built with Vibe Coding.</p>
+      <p class="footer-hint">按 <kbd data-kbd>Ctrl K</kbd> 開啟快速指令</p>
+    </div>
+  </footer>
+
+  <dialog id="spotlight" class="spotlight" aria-label="快速指令">
+    <div class="spotlight-row">
+      <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <input type="text" id="spotlight-input" class="spotlight-input" placeholder="搜尋區塊、作品或快速動作…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="spotlight-list" aria-autocomplete="list" />
+      <button type="button" id="spotlight-close" class="spotlight-esc" aria-label="關閉快速指令">Esc</button>
+    </div>
+    <ul id="spotlight-list" class="spotlight-list" role="listbox" aria-label="快速指令結果"></ul>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
