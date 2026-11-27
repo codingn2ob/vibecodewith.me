@@ -116,6 +116,74 @@ let currentIdeaIndex = -1;
 let toastTimer = null;
 
 const $ = (sel, root = document) => root.querySelector(sel);
+const motionOK = () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ==========================================================================
+   動效參考 UI Moments（MIT，© 2026 guanmo-ai，github.com/luojiaping/ui-moments）
+   「對齊撥片」的彈性滑塊與「夾頁鍵」的壓扁回彈，依本站元件重新實作。
+   許可全文見 THIRD_PARTY_NOTICES.md。
+   ========================================================================== */
+
+/* 彈性滑塊：選取底色滑向新項目時先順著方向拉長、再收緊回彈 */
+function createElasticThumb(container) {
+  const thumb = document.createElement("span");
+  thumb.className = "thumb";
+  thumb.setAttribute("aria-hidden", "true");
+  container.prepend(thumb);
+  let target = null;
+  let last = null;
+  let motion = null;
+
+  const measure = (el) => ({ x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+  const place = (g, scale = "") => `translate(${g.x}px, ${g.y}px)${scale}`;
+
+  function moveTo(el, animate = true) {
+    target = el;
+    motion?.cancel();
+    if (!el) {
+      thumb.classList.remove("is-on");
+      last = null;
+      return;
+    }
+    const to = measure(el);
+    thumb.style.width = to.w + "px";
+    thumb.style.height = to.h + "px";
+    thumb.style.transform = place(to);
+    thumb.classList.add("is-on");
+
+    const sameRow = last && last.y === to.y;
+    if (animate && motionOK() && last && sameRow && last.x !== to.x) {
+      const origin = to.x > last.x ? "right center" : "left center";
+      motion = thumb.animate([
+        { transform: place(last), width: last.w + "px", transformOrigin: origin },
+        { transform: place(to, " scale(1.28, 0.84)"), width: to.w + "px", transformOrigin: origin, offset: 0.61 },
+        { transform: place(to, " scale(0.94, 1.07)"), width: to.w + "px", transformOrigin: origin, offset: 0.83 },
+        { transform: place(to), width: to.w + "px", transformOrigin: origin }
+      ], { duration: 380, easing: "cubic-bezier(.21,.65,.31,1)" });
+    }
+    last = to;
+  }
+
+  window.addEventListener("resize", () => { if (target) moveTo(target, false); });
+  return { moveTo };
+}
+
+/* 按鈕放開後的回彈 */
+function bounce(el) {
+  if (!el || !motionOK()) return;
+  el.animate([
+    { transform: "translateY(1px) scale(1.05, 0.88)" },
+    { transform: "translateY(-2px) scale(0.97, 1.05)", offset: 0.43 },
+    { transform: "scale(1.012, 0.99)", offset: 0.73 },
+    { transform: "none" }
+  ], { duration: 380, easing: "cubic-bezier(.22,.74,.37,1)" });
+}
+
+function initPressFeedback() {
+  document.addEventListener("click", (e) => {
+    bounce(e.target.closest(".btn, .tool-btn, .copy-btn, .filter"));
+  });
+}
 const isExternal = (href) => /^https?:\/\//.test(href);
 
 function initSiteBindings() {
@@ -181,6 +249,14 @@ function applyTheme(theme) {
 function toggleTheme() {
   const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
   applyTheme(next);
+  const icon = $(next === "dark" ? "#theme-toggle .icon-moon" : "#theme-toggle .icon-sun");
+  if (icon && motionOK()) {
+    icon.animate([
+      { transform: "rotate(-120deg) scale(0.3)", opacity: 0 },
+      { transform: "rotate(12deg) scale(1.1)", opacity: 1, offset: 0.7 },
+      { transform: "none", opacity: 1 }
+    ], { duration: 520, easing: "cubic-bezier(.22,.74,.37,1)" });
+  }
   try { localStorage.setItem(STORAGE_THEME_KEY, next); } catch (e) {}
   showToast(next === "dark" ? "已切換為深色模式" : "已切換為淺色模式");
 }
@@ -313,7 +389,10 @@ function initLabFilters() {
   renderProjects("all");
 
   const buttons = [...document.querySelectorAll(".filter")];
+  const thumb = createElasticThumb($(".filters"));
+  thumb.moveTo(buttons.find((b) => b.classList.contains("is-active")), false);
   const select = (btn) => {
+    thumb.moveTo(btn);
     buttons.forEach((b) => {
       const on = b === btn;
       b.classList.toggle("is-active", on);
@@ -489,7 +568,12 @@ function initScrollSpy() {
   const links = [...document.querySelectorAll(".nav [data-spy]")];
   const sections = links.map((a) => document.getElementById(a.dataset.spy)).filter(Boolean);
   if (!sections.length) return;
+  const thumb = createElasticThumb($(".nav"));
+  let currentId;
   const setActive = (id) => {
+    if (id === currentId) return;
+    currentId = id;
+    thumb.moveTo(links.find((a) => a.dataset.spy === id) || null);
     links.forEach((a) => {
       const on = a.dataset.spy === id;
       a.classList.toggle("is-current", on);
@@ -528,4 +612,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initSpotlight();
   initMasthead();
   initScrollSpy();
+  initPressFeedback();
 });

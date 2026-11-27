@@ -26,6 +26,7 @@
   --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --spring: cubic-bezier(0.22, 1.6, 0.36, 1);
   --gutter: clamp(16px, 4vw, 48px);
   --maxw: 1180px;
 
@@ -139,11 +140,16 @@ kbd {
   font: 500 0.98rem/1 var(--f-sans);
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.25s var(--ease-out), background-color 0.25s, box-shadow 0.25s;
+  transition: transform 0.39s var(--spring), background-color 0.25s, box-shadow 0.25s;
 }
 .btn .icon { transition: transform 0.3s var(--ease-out); }
 .btn:hover .icon { transform: translateX(3px); }
-.btn:active { transform: scale(0.97); }
+/* 按下壓扁、放開回彈（動效參考 UI Moments「夾頁鍵」，見 THIRD_PARTY_NOTICES.md） */
+.btn, .tool-btn, .copy-btn, .filter { transition-property: transform, background-color, border-color, box-shadow, color; }
+.btn:active, .tool-btn:active, .copy-btn:active, .filter:active {
+  transform: translateY(1px) scale(1.04, 0.9);
+  transition: transform 100ms ease-out;
+}
 
 .btn-primary { background: var(--ink); color: var(--paper); }
 .btn-primary:hover { box-shadow: var(--shadow); }
@@ -223,7 +229,24 @@ kbd {
   transition: color 0.25s, background-color 0.25s var(--ease-out);
 }
 .nav a:hover { color: var(--ink); background: var(--paper-2); }
-.nav a.is-current { color: var(--paper); background: var(--ink); }
+.nav a.is-current, .nav a.is-current:hover { color: var(--paper); background: transparent; }
+
+/* 彈性滑塊（動效參考 UI Moments「對齊撥片」）：在導覽列與篩選鈕之間滑動、拉長再收緊 */
+.nav, .filters { position: relative; isolation: isolate; }
+.thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  will-change: transform, width;
+}
+.thumb.is-on { opacity: 1; }
+.nav .thumb { background: var(--ink); }
+.filters .thumb { border: 1px solid var(--ink); }
 
 .tools { display: flex; gap: 8px; }
 .tool-btn {
@@ -537,7 +560,7 @@ kbd {
 }
 .filter span { font-family: var(--f-mono); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .filter:hover { color: var(--ink); background: var(--paper-2); }
-.filter.is-active { color: var(--ink); border-color: var(--ink); background: transparent; }
+.filter.is-active, .filter.is-active:hover { color: var(--ink); background: transparent; }
 
 .projects {
   display: grid;
@@ -802,4 +825,11 @@ kbd {
 @media (hover: none) {
   .footer-hint, .kbd-hint { display: none; }
   .project-link:hover { transform: none; box-shadow: none; }
+}
+/* 主題鈕：圖示轉入 */
+.tool-btn-square .icon { transition: transform 0.5s var(--spring), opacity 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active, .tool-btn:active, .copy-btn:active, .filter:active { transform: none; }
+  .thumb { transition: none; }
 }
