@@ -1,3 +1,7 @@
 # 本機草稿與備份，不上傳
 versions/
 .claude/
+
+# AI 工具技能（本機用，不上傳）
+.agents/
+skills-lock.json

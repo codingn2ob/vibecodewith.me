@@ -200,56 +200,106 @@ function initSiteBindings() {
   });
 }
 
-/* Toast */
+/* Toast：畫面上的提示用 popover，報讀用一直存在的 live region */
+let lastToast = "";
 function showToast(message) {
   const el = $("#toast");
+  const live = $("#toast-live");
   if (!el) return;
-  el.hidden = true;
+  // 同一句話連續出現時，VoiceOver 會略過，所以加一個不換行空白讓它不同
+  const spoken = message === lastToast ? message + " " : message;
+  lastToast = spoken;
+  if (live) live.textContent = spoken;
+
   el.textContent = message;
-  void el.offsetWidth;
-  el.hidden = false;
+  const hasPopover = typeof el.showPopover === "function";
+  if (hasPopover) {
+    if (el.matches(":popover-open")) el.hidePopover();
+    el.showPopover();
+  } else {
+    el.classList.add("no-popover", "is-open");
+  }
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, 2400);
+  toastTimer = setTimeout(() => {
+    if (hasPopover) { if (el.matches(":popover-open")) el.hidePopover(); }
+    else el.classList.remove("is-open");
+  }, 2400);
 }
 
 /* Clipboard（HTTPS 與 file:// 都能用） */
-async function copyText(text, successMessage) {
+function legacyCopy(text) {
+  const prev = document.activeElement;
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
   try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      if (!ok) throw new Error("copy failed");
-    }
-    showToast(successMessage);
-  } catch (err) {
-    showToast("複製失敗，請手動選取文字複製");
+    ta.select();
+    if (!document.execCommand("copy")) throw new Error("copy failed");
+  } finally {
+    ta.remove();
+    prev?.focus?.({ preventScroll: true });
   }
 }
 
-/* Theme */
-function applyTheme(theme) {
-  const root = document.documentElement;
-  const btn = $("#theme-toggle");
-  const meta = $('meta[name="theme-color"]');
-  if (theme === "dark") root.setAttribute("data-theme", "dark");
-  else root.removeAttribute("data-theme");
-  if (btn) btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#141311" : "#eff0eb");
+async function copyText(text, successMessage, button) {
+  let ok = true;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      try { await navigator.clipboard.writeText(text); }
+      catch (e) { legacyCopy(text); }
+    } else {
+      legacyCopy(text);
+    }
+  } catch (err) {
+    ok = false;
+  }
+  showToast(ok ? successMessage : "複製失敗，請手動選取文字複製");
+  if (button) flashButton(button, ok ? "已複製" : "複製失敗");
+}
+
+/* 複製後在按鈕上也顯示結果，不只靠浮動提示 */
+function flashButton(button, text) {
+  const label = button.querySelector("[data-label]");
+  if (!label) return;
+  label.dataset.original ??= label.textContent;
+  label.textContent = text;
+  clearTimeout(button._flashTimer);
+  button._flashTimer = setTimeout(() => { label.textContent = label.dataset.original; }, 2000);
+}
+
+/* Theme：<meta name="color-scheme"> 是唯一依據。沒存偏好＝跟系統。
+   切換時選「目前看到的相反」；如果剛好等於系統設定，就清掉偏好回到跟系統。 */
+const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+const schemeMeta = () => $('meta[name="color-scheme"]');
+const systemTheme = () => (systemDark.matches ? "dark" : "light");
+function renderedTheme() {
+  const v = schemeMeta()?.content;
+  return v === "light" || v === "dark" ? v : systemTheme();
+}
+
+function syncThemeUI() {
+  const dark = renderedTheme() === "dark";
+  $("#theme-toggle")?.setAttribute("aria-pressed", dark ? "true" : "false");
+  $('meta[name="theme-color"]')?.setAttribute("content", dark ? "#141311" : "#eff0eb");
+}
+
+function setStoredTheme(value) {
+  try {
+    if (value) localStorage.setItem(STORAGE_THEME_KEY, value);
+    else localStorage.removeItem(STORAGE_THEME_KEY);
+  } catch (e) {}
+  const meta = schemeMeta();
+  if (meta) meta.content = value || "light dark";
+  syncThemeUI();
 }
 
 function toggleTheme() {
-  const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-  applyTheme(next);
-  const icon = $(next === "dark" ? "#theme-toggle .icon-moon" : "#theme-toggle .icon-sun");
+  const target = renderedTheme() === "dark" ? "light" : "dark";
+  setStoredTheme(target === systemTheme() ? null : target);
+  const icon = $(target === "dark" ? "#theme-toggle .icon-moon" : "#theme-toggle .icon-sun");
   if (icon && motionOK()) {
     icon.animate([
       { transform: "rotate(-120deg) scale(0.3)", opacity: 0 },
@@ -257,13 +307,20 @@ function toggleTheme() {
       { transform: "none", opacity: 1 }
     ], { duration: 520, easing: "cubic-bezier(.22,.74,.37,1)" });
   }
-  try { localStorage.setItem(STORAGE_THEME_KEY, next); } catch (e) {}
-  showToast(next === "dark" ? "已切換為深色模式" : "已切換為淺色模式");
+  showToast(target === "dark" ? "已切換為深色模式" : "已切換為淺色模式");
 }
 
 function initTheme() {
-  applyTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+  syncThemeUI();
   $("#theme-toggle")?.addEventListener("click", toggleTheme);
+  // 其他分頁改了主題就跟著變；系統切換深淺色時更新按鈕狀態（CSS 會自己跟上）
+  window.addEventListener("storage", (e) => {
+    if (e.key !== STORAGE_THEME_KEY) return;
+    const meta = schemeMeta();
+    if (meta) meta.content = e.newValue === "light" || e.newValue === "dark" ? e.newValue : "light dark";
+    syncThemeUI();
+  });
+  systemDark.addEventListener("change", syncThemeUI);
 }
 
 /* 台北時間 */
@@ -320,7 +377,7 @@ function initVibeMachine() {
   $("#vibe-next-btn")?.addEventListener("click", () => rollNextIdea(true));
   $("#vibe-copy-btn")?.addEventListener("click", () => {
     const idea = VIBE_IDEAS[currentIdeaIndex];
-    if (idea) copyText(idea.prompt, "已複製起手式 Prompt，去貼給 Claude 吧！");
+    if (idea) copyText(idea.prompt, "已複製起手式 Prompt，去貼給 Claude 吧！", $("#vibe-copy-btn"));
   });
 }
 
@@ -390,34 +447,19 @@ function initLabFilters() {
 
   const buttons = [...document.querySelectorAll(".filter")];
   const thumb = createElasticThumb($(".filters"));
-  thumb.moveTo(buttons.find((b) => b.classList.contains("is-active")), false);
+  thumb.moveTo(buttons.find((b) => b.getAttribute("aria-pressed") === "true"), false);
   const select = (btn) => {
     thumb.moveTo(btn);
-    buttons.forEach((b) => {
-      const on = b === btn;
-      b.classList.toggle("is-active", on);
-      b.setAttribute("aria-selected", on ? "true" : "false");
-      b.tabIndex = on ? 0 : -1;
-    });
+    buttons.forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
     renderProjects(btn.getAttribute("data-filter") || "all");
   };
-  buttons.forEach((btn, i) => {
-    btn.tabIndex = btn.classList.contains("is-active") ? 0 : -1;
-    btn.addEventListener("click", () => select(btn));
-    btn.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      e.preventDefault();
-      const next = buttons[(i + (e.key === "ArrowRight" ? 1 : -1) + buttons.length) % buttons.length];
-      next.focus();
-      select(next);
-    });
-  });
+  buttons.forEach((btn) => btn.addEventListener("click", () => select(btn)));
 }
 
 /* 聯絡 */
 function initContact() {
   $("#copy-email-btn")?.addEventListener("click", () => {
-    copyText(SITE_CONFIG.email, `已複製信箱：${SITE_CONFIG.email}`);
+    copyText(SITE_CONFIG.email, `已複製信箱：${SITE_CONFIG.email}`, $("#copy-email-btn"));
   });
 }
 
@@ -458,6 +500,39 @@ function getCommands() {
   return [...base, ...projects];
 }
 
+/* 進出 top layer 的關閉動畫：支援 overlay/display 過渡就直接 close()，
+   不支援（Firefox、Safari）就先加 data-closing 播完再關 */
+let supportsDisplayTransition;
+function canTransitionDisplay() {
+  if (supportsDisplayTransition !== undefined) return supportsDisplayTransition;
+  if (!window.CSS?.supports?.("transition-behavior", "allow-discrete") || !document.body) return false;
+  const probe = document.createElement("div");
+  probe.style.cssText = "transition: display 1s allow-discrete !important; display: block;";
+  document.body.appendChild(probe);
+  getComputedStyle(probe).display;
+  probe.style.display = "none";
+  supportsDisplayTransition = getComputedStyle(probe).display === "block";
+  probe.remove();
+  return supportsDisplayTransition;
+}
+const supportsTopLayerExit = () => window.CSS?.supports?.("overlay", "auto") && canTransitionDisplay();
+
+async function closeTopLayer(el) {
+  if (!supportsTopLayerExit()) {
+    el.setAttribute("data-closing", "");
+    const animations = el.getAnimations({ subtree: true });
+    if (animations.length > 0) {
+      await Promise.race([
+        Promise.allSettled(animations.map((a) => a.finished)),
+        new Promise((r) => setTimeout(r, 2000))
+      ]);
+    }
+    if (!el.hasAttribute("data-closing")) return;
+    el.removeAttribute("data-closing");
+  }
+  el.close();
+}
+
 function initSpotlight() {
   const dialog = $("#spotlight");
   const input = $("#spotlight-input");
@@ -467,7 +542,7 @@ function initSpotlight() {
   let results = [];
   let selected = 0;
 
-  const close = () => { if (dialog.open) dialog.close(); };
+  const close = () => (dialog.open ? closeTopLayer(dialog) : Promise.resolve());
 
   const render = (query = "") => {
     const q = query.trim().toLowerCase();
@@ -523,9 +598,9 @@ function initSpotlight() {
     input.setAttribute("aria-activedescendant", `sp-opt-${selected}`);
   };
 
-  const run = (i) => {
+  const run = async (i) => {
     const cmd = results[i];
-    close();
+    await close();
     if (cmd) cmd.run();
   };
 
@@ -539,7 +614,17 @@ function initSpotlight() {
 
   $("#spotlight-trigger")?.addEventListener("click", open);
   $("#spotlight-close")?.addEventListener("click", close);
-  dialog.addEventListener("click", (e) => { if (e.target === dialog) close(); });
+  // Esc 與點背景關閉都走同一個有動畫的關閉流程
+  dialog.addEventListener("cancel", (e) => { e.preventDefault(); close(); });
+  // 不支援 closedby="any" 的瀏覽器：點到對話框外面才關
+  if (!("closedBy" in HTMLDialogElement.prototype)) {
+    dialog.addEventListener("click", (e) => {
+      if (e.target !== dialog) return;
+      const r = dialog.getBoundingClientRect();
+      const inside = r.top <= e.clientY && e.clientY <= r.bottom && r.left <= e.clientX && e.clientX <= r.right;
+      if (!inside) close();
+    });
+  }
   input.addEventListener("input", () => render(input.value));
   input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") { e.preventDefault(); highlight(selected + 1); }
@@ -554,11 +639,11 @@ function initSpotlight() {
   });
 }
 
-/* 捲動後讓頂欄出現分隔線 */
+/* 頂欄貼住頂端時出現分隔線：支援 scroll-state 查詢的瀏覽器用 CSS，其他用 JS 補 */
 function initMasthead() {
   const bar = $(".masthead");
-  if (!bar) return;
-  const update = () => bar.classList.toggle("is-scrolled", window.scrollY > 8);
+  if (!bar || CSS.supports("container-type", "scroll-state")) return;
+  const update = () => bar.classList.toggle("is-stuck", window.scrollY > 8);
   update();
   window.addEventListener("scroll", update, { passive: true });
 }
@@ -588,18 +673,23 @@ function initScrollSpy() {
       }
     });
   };
+  // 以畫面 35% 高度的一條線判斷目前區塊；捲到底時算最後一個區塊
+  const crossing = new Set();
+  let atBottom = false;
   const update = () => {
-    const line = window.innerHeight * 0.35;
-    let current = null;
-    sections.forEach((s) => { if (s.getBoundingClientRect().top <= line) current = s.id; });
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
-      current = sections[sections.length - 1].id;
-    }
-    setActive(current);
+    if (atBottom) return setActive(sections[sections.length - 1].id);
+    const hit = sections.filter((sec) => crossing.has(sec));
+    setActive(hit.length ? hit[hit.length - 1].id : null);
   };
-  update();
-  window.addEventListener("scroll", update, { passive: true });
-  window.addEventListener("resize", update);
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => (e.isIntersecting ? crossing.add(e.target) : crossing.delete(e.target)));
+    update();
+  }, { rootMargin: "-35% 0px -64% 0px" });
+  sections.forEach((sec) => io.observe(sec));
+  const footer = $(".footer");
+  if (footer) {
+    new IntersectionObserver(([e]) => { atBottom = e.isIntersecting; update(); }, { threshold: 0.6 }).observe(footer);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
